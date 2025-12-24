@@ -1,15 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AutomationResult, TaskBreakdown } from '../types';
 import TimelineViz from './TimelineViz';
-import { Lock, ArrowRight, Share2, Download } from 'lucide-react';
+import { Lock, Share2, Check } from 'lucide-react';
 import { CAPABILITY_MATRIX } from '../constants';
+import { generateShareUrl } from '../services/shareService';
 
 interface ResultsViewProps {
   result: AutomationResult;
   onReset: () => void;
+  tasks: TaskBreakdown[]; // Needed for sharing
 }
 
-const ResultsView: React.FC<ResultsViewProps> = ({ result, onReset }) => {
+const ResultsView: React.FC<ResultsViewProps> = ({ result, onReset, tasks }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const url = generateShareUrl(result.job_title, tasks);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy", err);
+      // Fallback or alert if clipboard fails
+      alert("Could not copy link to clipboard. URL: " + url);
+    }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto animate-fade-in pb-20">
       <div className="text-center mb-8">
@@ -62,8 +79,12 @@ const ResultsView: React.FC<ResultsViewProps> = ({ result, onReset }) => {
         >
           Check Another Job
         </button>
-        <button className="px-6 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-full flex items-center gap-2 shadow-lg shadow-brand-500/20 transition-all">
-          <Share2 className="w-4 h-4" /> Share Result
+        <button 
+          onClick={handleShare}
+          className={`px-6 py-2 font-medium rounded-full flex items-center gap-2 shadow-lg transition-all ${copied ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-brand-600 hover:bg-brand-700 text-white shadow-brand-500/20'}`}
+        >
+          {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+          {copied ? 'Link Copied!' : 'Share Result'}
         </button>
       </div>
     </div>

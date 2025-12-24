@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppStep, TaskBreakdown, AutomationResult } from './types';
 import JobInput from './components/JobInput';
 import TaskEditor from './components/TaskEditor';
 import ResultsView from './components/ResultsView';
 import { decomposeJobToTasks } from './services/geminiService';
 import { calculateAutomationTimeline } from './services/calculatorService';
+import { parseShareUrl } from './services/shareService';
 import { Activity } from 'lucide-react';
 
 export default function App() {
@@ -13,6 +14,20 @@ export default function App() {
   const [tasks, setTasks] = useState<TaskBreakdown[]>([]);
   const [result, setResult] = useState<AutomationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check for shared URL on mount
+  useEffect(() => {
+    const sharedData = parseShareUrl();
+    if (sharedData) {
+      setJobTitle(sharedData.jobTitle);
+      setTasks(sharedData.tasks);
+      
+      // Immediately calculate results for shared view
+      const res = calculateAutomationTimeline(sharedData.jobTitle, sharedData.tasks);
+      setResult(res);
+      setStep('RESULTS');
+    }
+  }, []);
 
   const handleJobSubmit = async (title: string) => {
     setIsLoading(true);
@@ -44,6 +59,9 @@ export default function App() {
   };
 
   const handleReset = () => {
+    // Clear URL params without refreshing
+    window.history.pushState({}, '', window.location.pathname);
+    
     setStep('INPUT');
     setJobTitle('');
     setTasks([]);
@@ -86,7 +104,11 @@ export default function App() {
         )}
 
         {step === 'RESULTS' && result && (
-           <ResultsView result={result} onReset={handleReset} />
+           <ResultsView 
+             result={result} 
+             onReset={handleReset} 
+             tasks={tasks}
+           />
         )}
       </main>
 
