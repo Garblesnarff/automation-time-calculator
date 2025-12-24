@@ -1,0 +1,5 @@
+{
+  "name": "Horizon - Automation Timeline Calculator",
+  "description": "A personalized calculator that analyzes job tasks against AI capability trajectories to output a concrete automation timeline.",
+  "requestFramePermissions": []
+}
